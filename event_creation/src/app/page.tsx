@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/swiper-bundle.css';
+import TimeSelector from '@components/time_input';
+import TimeZoneSelector from '@components/timezone';
 
 // Styled components
 const Container = styled.div`
@@ -11,7 +13,9 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   height: 100vh;
+  width: 100vw;
   background: linear-gradient(90deg, #29B689 0%, rgba(13, 47, 36, 0.80) 100%);
+  overflow:hidden;
 `;
 
 const EditableTitle = styled.div`
@@ -51,9 +55,9 @@ const TitleInput = styled.input`
 
 const SwiperContainer = styled.div`
   margin-top: 60px;
+  margin-bottom: 60px;
   margin-left: 15px;
   width: 100%; /* Ensure full width of the container */
-  height: 100%;
   overflow: visible !important; /* Add this line to set overflow: visible */
 `;
 
@@ -109,13 +113,26 @@ const DateText = styled.p<{ isBold: boolean }>`
   margin: 0;
 `;
 
-// Home component
+const TimeSelectorContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 30px;
+`;
+
+const TimeSelectorRow = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+`;
+
 // Home component
 const Home: React.FC = () => {
   const [isEditing, setEditing] = useState(false);
   const [eventName, setEventName] = useState('Add Event Name');
   const [swiperDates, setSwiperDates] = useState<Date[]>([]);
   const [selectedCards, setSelectedCards] = useState<number[]>([]);
+  
 
   const handleTitleClick = () => {
     setEditing(true);
@@ -159,6 +176,16 @@ const Home: React.FC = () => {
     const newDate = new Date(lastDate);
     newDate.setDate(lastDate.getDate() + 1);
     setSwiperDates([...swiperDates, newDate]);
+  };
+
+  const handleTimeSelection = () => {
+    // Handle the time selection logic here
+    console.log('Time selected!');
+  };
+
+  const handleTimeZoneSelection = (timeZone: string) => {
+    // Handle the timezone selection logic here
+    console.log('Time Zone selected:', timeZone);
   };
 
   const handleCardSelect = (index: number) => {
@@ -205,6 +232,17 @@ const Home: React.FC = () => {
           ))}
         </Swiper>
       </SwiperContainer>
+      <TimeSelectorContainer>
+        <TimeSelectorRow>
+          <TimeSelector label="From"  onSelect={handleTimeSelection} />
+        </TimeSelectorRow>
+        <TimeSelectorRow>
+          <TimeSelector label="To"  onSelect={handleTimeSelection} />
+        </TimeSelectorRow>
+        <TimeSelectorRow>
+        <TimeZoneSelector onSelect={handleTimeZoneSelection} />
+        </TimeSelectorRow>
+      </TimeSelectorContainer>
     </Container>
   );
 };
