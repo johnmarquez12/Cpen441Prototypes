@@ -2,7 +2,7 @@ import 'dart:ui';
 
 class Event {
   final Color color;
-  final String timeRange;
+  late String timeRange;
 
   // Named constructor with named parameters
   Event({

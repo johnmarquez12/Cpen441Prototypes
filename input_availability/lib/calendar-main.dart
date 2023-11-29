@@ -9,19 +9,19 @@ class MyCalendar extends StatefulWidget {
 }
 
 class _MyCalendarState extends State<MyCalendar> {
-  CalendarEventsController<Event> eventsController = CalendarEventsController<
-      Event>();
-  CalendarController calendarController = CalendarController();
+
+  final CalendarEventsController<Event> eventsController = CalendarEventsController<Event>();
+  final CalendarController<Event> calendarController = CalendarController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-            title: Text('Prototype')
+            title: const Text('Input Availability')
         ),
         body: Stack(
             children: [
-              CalendarView(
+              CalendarView<Event>(
                 eventsController: eventsController,
                 controller: calendarController,
                 viewConfiguration: WeekConfiguration(
@@ -33,7 +33,7 @@ class _MyCalendarState extends State<MyCalendar> {
                   createMultiDayEvents: true,
                   verticalStepDuration: const Duration(minutes: 15),
                   verticalSnapRange: const Duration(minutes: 15),
-                  newEventDuration: const Duration(minutes: 15),
+                  newEventDuration: const Duration(hours: 1),
                   horizontalStepDuration: const Duration(days: 1),
                   paintWeekNumber: true,
                   enableRescheduling: true,
@@ -42,56 +42,10 @@ class _MyCalendarState extends State<MyCalendar> {
                 multiDayTileBuilder: _multiDayTileBuilder,
                 scheduleTileBuilder: _scheduleTileBuilder,
                 eventHandlers: CalendarEventHandlers(
-                  onEventTapped: (event) async {
-                    HapticFeedback.lightImpact();
-                    print("on event tapped");
-                    // Check if the event that was tapped is is currently selected.
-                    setState(() {
-                      eventsController.selectedEvent == event
-                      // If it is selected, deselect it.
-                          ? eventsController.deselectEvent()
-                      // If it is not selected, select it.
-                          : eventsController.selectEvent(
-                          event as CalendarEvent<Event>);
-                    });
-                  },
-                  onEventChanged: (initialDateTimeRange, event) async {
-                    // If you want to deselect the event after it has been resized/rescheduled. uncomment the following line.
-                    // eventController.deselectEvent();
-                    print("on event changed");
-                    HapticFeedback.vibrate();
-                  },
-                  onEventChangeStart: (event) {
-                    // You can give the user some haptic feedback here.
-                    print("on event change start");
-                  },
-                  onCreateEvent: (DateTimeRange dateTimeRange) {
-                    HapticFeedback.selectionClick();
-                    print("on create event");
-
-                    Event event = Event( // The custom object that you want to link to the event.
-                        color: Colors.greenAccent,
-                        timeRange: formatTimeRange(dateTimeRange)
-                    );
-
-                    eventsController.addEvent(
-                        CalendarEvent(
-                          dateTimeRange: DateTimeRange(
-                              start: dateTimeRange.start,
-                              end: dateTimeRange.start.add(
-                                  const Duration(hours: 1))),
-                          modifiable: true,
-                          // Change this to false if you do not want the user to modify the event.
-                          eventData: event,
-                        )
-                    );
-
-                    setState(() {
-                      if (eventsController.selectedEvent != null) {
-                        eventsController.deselectEvent();
-                      }
-                    });
-                  },
+                  onEventTapped: onEventTapped,
+                  onEventChanged: onEventChanged,
+                  onCreateEvent: onCreateEvent,
+                  onEventCreated: onEventCreated
                 ),
               ),
               Visibility(
@@ -101,7 +55,6 @@ class _MyCalendarState extends State<MyCalendar> {
                   right: 16.0,
                   child: FloatingActionButton(
                     onPressed: () {
-                      // Handle delete action
                       setState(() {
                         eventsController.removeEvent(
                             eventsController.selectedEvent as CalendarEvent<
@@ -114,11 +67,46 @@ class _MyCalendarState extends State<MyCalendar> {
                 ),
               ),
             ]
-
         )
-
-
     );
+  }
+
+  CalendarEvent<Event> onCreateEvent(DateTimeRange dateTimeRange) {
+    print("on create event");
+    HapticFeedback.selectionClick();
+    return createCalendarEvent(dateTimeRange);
+  }
+
+  Future<void> onEventCreated(CalendarEvent<Event> event) async {
+    setState(() {
+      eventsController.deselectEvent();
+      eventsController.addEvent(event);
+    });
+  }
+
+  Future<void> onEventTapped(CalendarEvent<Event> event) async {
+    HapticFeedback.lightImpact();
+    print("on event tapped");
+    // Check if the event that was tapped is is currently selected.
+    setState(() {
+      eventsController.selectedEvent == event
+      // If it is selected, deselect it.
+          ? eventsController.deselectEvent()
+      // If it is not selected, select it.
+          : eventsController.selectEvent(
+          event);
+    });
+  }
+
+  Future<void> onEventChanged(DateTimeRange initialDateTimeRange,
+      CalendarEvent<Event> event) async {
+      setState(() {
+        event.eventData?.timeRange = formatTimeRange(event.dateTimeRange);
+        eventsController.deselectEvent();
+      });
+
+      print("on event changed");
+      HapticFeedback.vibrate();
   }
 }
 
@@ -142,4 +130,15 @@ Widget _scheduleTileBuilder(event, date) => const Card(
 String formatTimeRange(DateTimeRange dateTimeRange) {
   return "${dateTimeRange.start.hour}:${dateTimeRange.start.minute} - "
       "${dateTimeRange.end.hour}:${dateTimeRange.end.minute}";
+}
+
+CalendarEvent<Event> createCalendarEvent(DateTimeRange dateTimeRange) {
+  return CalendarEvent(
+      dateTimeRange: dateTimeRange,
+      modifiable: true,
+      eventData: Event( // The custom object that you want to link to the event.
+          color: Colors.greenAccent,
+          timeRange: formatTimeRange(dateTimeRange)
+      )
+  );
 }
