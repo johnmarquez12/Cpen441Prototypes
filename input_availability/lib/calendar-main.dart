@@ -115,7 +115,13 @@ Widget _tileBuilder(CalendarEvent<dynamic> event, TileConfiguration tileConfigur
 
   return Card(
     color: customObject?.color,
-    child: Text(customObject!.timeRange),
+    child: Text(
+      customObject!.timeRange,
+      style: const TextStyle(
+        fontSize: 8.0,
+        fontWeight: FontWeight.bold
+      )
+    ),
   );
 }
 
@@ -128,8 +134,11 @@ Widget _scheduleTileBuilder(event, date) => const Card(
 );
 
 String formatTimeRange(DateTimeRange dateTimeRange) {
-  return "${dateTimeRange.start.hour}:${dateTimeRange.start.minute} - "
-      "${dateTimeRange.end.hour}:${dateTimeRange.end.minute}";
+  return "${dateTimeRange.start.hour}:"
+      "${dateTimeRange.start.minute == 0 ? "00" : dateTimeRange.start.minute}"
+      " - "
+      "${dateTimeRange.end.hour}:"
+      "${dateTimeRange.end.minute == 0 ? "00" : dateTimeRange.end.minute}";
 }
 
 CalendarEvent<Event> createCalendarEvent(DateTimeRange dateTimeRange) {
