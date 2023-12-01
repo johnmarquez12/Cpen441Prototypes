@@ -35,59 +35,57 @@ class _MyCalendarState extends State<MyCalendar> {
           )
         ],
       ),
-      body: SizedBox(
-        child: Stack(
-          children: [
-            CalendarView<Event>(
-              style: CalendarStyle(
-                calendarHeaderBackgroundStyle: CalendarHeaderBackgroundStyle(
-                  headerBackgroundColor: Colors.orangeAccent[100],
-                ),
-              ),
-              eventsController: eventsController,
-              controller: calendarController,
-              viewConfiguration: WeekConfiguration(
-                timelineWidth: 56,
-                multiDayTileHeight: 24,
-                eventSnapping: false,
-                timeIndicatorSnapping: false,
-                createEvents: true,
-                createMultiDayEvents: true,
-                verticalStepDuration: const Duration(minutes: 15),
-                verticalSnapRange: const Duration(minutes: 15),
-                newEventDuration: const Duration(hours: 1),
-                horizontalStepDuration: const Duration(days: 1),
-                paintWeekNumber: true,
-                enableRescheduling: true,
-              ),
-              tileBuilder: _tileBuilder,
-              multiDayTileBuilder: _multiDayTileBuilder,
-              scheduleTileBuilder: _scheduleTileBuilder,
-              eventHandlers: CalendarEventHandlers(
-                  onEventTapped: onEventTapped,
-                  onEventChanged: onEventChanged,
-                  onCreateEvent: onCreateEvent,
-                  onEventCreated: onEventCreated),
-            ),
-            Visibility(
-              visible: eventsController.selectedEvent != null,
-              child: Positioned(
-                bottom: 16.0,
-                right: 16.0,
-                child: FloatingActionButton(
-                  onPressed: () {
-                    setState(() {
-                      eventsController.removeEvent(eventsController
-                          .selectedEvent as CalendarEvent<Event>);
-                      eventsController.deselectEvent();
-                    });
-                  },
-                  child: const Icon(Icons.delete),
-                ),
+      body: Stack(
+        children: [
+          CalendarView<Event>(
+            style: CalendarStyle(
+              calendarHeaderBackgroundStyle: CalendarHeaderBackgroundStyle(
+                headerBackgroundColor: Colors.orangeAccent[100],
               ),
             ),
-          ],
-        ),
+            eventsController: eventsController,
+            controller: calendarController,
+            viewConfiguration: WeekConfiguration(
+              timelineWidth: 56,
+              multiDayTileHeight: 24,
+              eventSnapping: false,
+              timeIndicatorSnapping: false,
+              createEvents: true,
+              createMultiDayEvents: true,
+              verticalStepDuration: const Duration(minutes: 15),
+              verticalSnapRange: const Duration(minutes: 15),
+              newEventDuration: const Duration(hours: 1),
+              horizontalStepDuration: const Duration(days: 1),
+              paintWeekNumber: true,
+              enableRescheduling: true,
+            ),
+            tileBuilder: _tileBuilder,
+            multiDayTileBuilder: _multiDayTileBuilder,
+            scheduleTileBuilder: _scheduleTileBuilder,
+            eventHandlers: CalendarEventHandlers(
+                onEventTapped: onEventTapped,
+                onEventChanged: onEventChanged,
+                onCreateEvent: onCreateEvent,
+                onEventCreated: onEventCreated),
+          ),
+          Visibility(
+            visible: eventsController.selectedEvent != null,
+            child: Positioned(
+              bottom: 16.0,
+              right: 16.0,
+              child: FloatingActionButton(
+                onPressed: () {
+                  setState(() {
+                    eventsController.removeEvent(
+                        eventsController.selectedEvent as CalendarEvent<Event>);
+                    eventsController.deselectEvent();
+                  });
+                },
+                child: const Icon(Icons.delete),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
