@@ -328,13 +328,12 @@ const Home: React.FC = () => {
         <TimeZoneSelector onSelect={handleTimeZoneSelection} />
         </TimeSelectorRow>
       </TimeSelectorContainer>
+      <Link href="https://asf21415125.framer.ai/">
       <ButtonContainer>
         <StyledButton>
           <ButtonText>Create New Event</ButtonText>
         </StyledButton>
       </ButtonContainer>
-      <Link href="https://asf21415125.framer.ai/">
-      <StyledButton>SLAY</StyledButton>
       </Link>
     </Container>
   );
