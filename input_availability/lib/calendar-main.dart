@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:input_availability/group-availability.dart';
 import 'package:kalender/kalender.dart';
 import 'package:flutter/services.dart';
 import 'event.dart';
@@ -9,65 +10,85 @@ class MyCalendar extends StatefulWidget {
 }
 
 class _MyCalendarState extends State<MyCalendar> {
-
-  final CalendarEventsController<Event> eventsController = CalendarEventsController<Event>();
-  final CalendarController<Event> calendarController = CalendarController();
+  final CalendarEventsController<Event> eventsController =
+      CalendarEventsController<Event>();
+  final CalendarController<Event> calendarController = CalendarController(
+    initialDate: DateTime.now(),
+  );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-            title: const Text('Input Availability')
-        ),
-        body: Stack(
-            children: [
-              CalendarView<Event>(
-                eventsController: eventsController,
-                controller: calendarController,
-                viewConfiguration: WeekConfiguration(
-                  timelineWidth: 56,
-                  multiDayTileHeight: 24,
-                  eventSnapping: false,
-                  timeIndicatorSnapping: false,
-                  createEvents: true,
-                  createMultiDayEvents: true,
-                  verticalStepDuration: const Duration(minutes: 15),
-                  verticalSnapRange: const Duration(minutes: 15),
-                  newEventDuration: const Duration(hours: 1),
-                  horizontalStepDuration: const Duration(days: 1),
-                  paintWeekNumber: true,
-                  enableRescheduling: true,
+      appBar: AppBar(
+        title: const Text('Input Availability'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.done),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => GroupAvailability(),
                 ),
-                tileBuilder: _tileBuilder,
-                multiDayTileBuilder: _multiDayTileBuilder,
-                scheduleTileBuilder: _scheduleTileBuilder,
-                eventHandlers: CalendarEventHandlers(
+              );
+            },
+          )
+        ],
+      ),
+      body: SizedBox(
+        child: Stack(
+          children: [
+            CalendarView<Event>(
+              style: CalendarStyle(
+                calendarHeaderBackgroundStyle: CalendarHeaderBackgroundStyle(
+                  headerBackgroundColor: Colors.orangeAccent[100],
+                ),
+              ),
+              eventsController: eventsController,
+              controller: calendarController,
+              viewConfiguration: WeekConfiguration(
+                timelineWidth: 56,
+                multiDayTileHeight: 24,
+                eventSnapping: false,
+                timeIndicatorSnapping: false,
+                createEvents: true,
+                createMultiDayEvents: true,
+                verticalStepDuration: const Duration(minutes: 15),
+                verticalSnapRange: const Duration(minutes: 15),
+                newEventDuration: const Duration(hours: 1),
+                horizontalStepDuration: const Duration(days: 1),
+                paintWeekNumber: true,
+                enableRescheduling: true,
+              ),
+              tileBuilder: _tileBuilder,
+              multiDayTileBuilder: _multiDayTileBuilder,
+              scheduleTileBuilder: _scheduleTileBuilder,
+              eventHandlers: CalendarEventHandlers(
                   onEventTapped: onEventTapped,
                   onEventChanged: onEventChanged,
                   onCreateEvent: onCreateEvent,
-                  onEventCreated: onEventCreated
+                  onEventCreated: onEventCreated),
+            ),
+            Visibility(
+              visible: eventsController.selectedEvent != null,
+              child: Positioned(
+                bottom: 16.0,
+                right: 16.0,
+                child: FloatingActionButton(
+                  onPressed: () {
+                    setState(() {
+                      eventsController.removeEvent(eventsController
+                          .selectedEvent as CalendarEvent<Event>);
+                      eventsController.deselectEvent();
+                    });
+                  },
+                  child: const Icon(Icons.delete),
                 ),
               ),
-              Visibility(
-                visible: eventsController.selectedEvent != null,
-                child: Positioned(
-                  bottom: 16.0,
-                  right: 16.0,
-                  child: FloatingActionButton(
-                    onPressed: () {
-                      setState(() {
-                        eventsController.removeEvent(
-                            eventsController.selectedEvent as CalendarEvent<
-                                Event>);
-                        eventsController.deselectEvent();
-                      });
-                    },
-                    child: const Icon(Icons.delete),
-                  ),
-                ),
-              ),
-            ]
-        )
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -90,48 +111,43 @@ class _MyCalendarState extends State<MyCalendar> {
     // Check if the event that was tapped is is currently selected.
     setState(() {
       eventsController.selectedEvent == event
-      // If it is selected, deselect it.
+          // If it is selected, deselect it.
           ? eventsController.deselectEvent()
-      // If it is not selected, select it.
-          : eventsController.selectEvent(
-          event);
+          // If it is not selected, select it.
+          : eventsController.selectEvent(event);
     });
   }
 
-  Future<void> onEventChanged(DateTimeRange initialDateTimeRange,
-      CalendarEvent<Event> event) async {
-      setState(() {
-        event.eventData?.timeRange = formatTimeRange(event.dateTimeRange);
-        eventsController.deselectEvent();
-      });
+  Future<void> onEventChanged(
+      DateTimeRange initialDateTimeRange, CalendarEvent<Event> event) async {
+    setState(() {
+      event.eventData?.timeRange = formatTimeRange(event.dateTimeRange);
+      eventsController.deselectEvent();
+    });
 
-      print("on event changed");
-      HapticFeedback.vibrate();
+    print("on event changed");
+    HapticFeedback.vibrate();
   }
 }
 
-Widget _tileBuilder(CalendarEvent<dynamic> event, TileConfiguration tileConfiguration) {
+Widget _tileBuilder(
+    CalendarEvent<dynamic> event, TileConfiguration tileConfiguration) {
   final Event? customObject = event.eventData;
 
   return Card(
     color: customObject?.color,
-    child: Text(
-      customObject!.timeRange,
-      style: const TextStyle(
-        fontSize: 8.0,
-        fontWeight: FontWeight.bold
-      )
-    ),
+    child: Text(customObject!.timeRange,
+        style: const TextStyle(fontSize: 8.0, fontWeight: FontWeight.bold)),
   );
 }
 
 Widget _multiDayTileBuilder(event, tileConfiguration) => const Card(
-  color: Colors.red,
-);
+      color: Colors.red,
+    );
 
 Widget _scheduleTileBuilder(event, date) => const Card(
-  color: Colors.redAccent,
-);
+      color: Colors.redAccent,
+    );
 
 String formatTimeRange(DateTimeRange dateTimeRange) {
   return "${dateTimeRange.start.hour}:"
@@ -145,9 +161,8 @@ CalendarEvent<Event> createCalendarEvent(DateTimeRange dateTimeRange) {
   return CalendarEvent(
       dateTimeRange: dateTimeRange,
       modifiable: true,
-      eventData: Event( // The custom object that you want to link to the event.
+      eventData: Event(
+          // The custom object that you want to link to the event.
           color: Colors.greenAccent,
-          timeRange: formatTimeRange(dateTimeRange)
-      )
-  );
+          timeRange: formatTimeRange(dateTimeRange)));
 }
