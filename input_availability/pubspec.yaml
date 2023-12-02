@@ -38,6 +38,7 @@ dependencies:
   syncfusion_flutter_calendar: ^23.2.4
   kalender: ^0.1.8
   date_format: ^2.0.7
+  flutter_xlider: ^3.5.0
 
 dev_dependencies:
   flutter_test:

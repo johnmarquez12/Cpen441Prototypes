@@ -25,7 +25,7 @@ final availabilities = t == "easy"
         ),
         DateTimeRange(
           start: DateTime(2023, 12, 9, 18, 30),
-          end: DateTime(2023, 12, 9, 20),
+          end: DateTime(2023, 12, 9, 21),
         ),
       ]
     : t == "medium"
@@ -60,7 +60,7 @@ final availabilities = t == "easy"
             ),
             DateTimeRange(
               start: DateTime(2023, 12, 10, 16, 30),
-              end: DateTime(2023, 12, 10, 17),
+              end: DateTime(2023, 12, 10, 20),
             ),
           ]
         : [
@@ -110,7 +110,7 @@ final availabilities = t == "easy"
             ),
             DateTimeRange(
               start: DateTime(2023, 12, 9, 18, 30),
-              end: DateTime(2023, 12, 9, 20),
+              end: DateTime(2023, 12, 9, 21),
             ),
             DateTimeRange(
               start: DateTime(2023, 12, 10, 12, 30),
@@ -148,6 +148,8 @@ const totalParticipants = t == "easy"
         ? 8
         : 16;
 
+var selectedTimeIndex = -1;
+
 class GroupAvailability extends StatefulWidget {
   const GroupAvailability({super.key});
 
@@ -156,13 +158,18 @@ class GroupAvailability extends StatefulWidget {
 }
 
 class _GroupAvailabilityState extends State<GroupAvailability> {
-  var selectedTimeIndex = -1;
   // Combine the lists using zip
   final combinedList = List.generate(availabilities.length,
       (index) => Tuple2(availabilities[index], participants[index]));
 
   /// The max number of suggested times
   final int maxSuggestedTimes = 3;
+
+  /// The minimum duration of the suggested time slots in hours
+  double _currentSliderValue = 0.5;
+
+  /// The filtered time slots, from combinedList, with duration of at least [_currentSliderValue] hours
+  List<Tuple2> filteredList = [];
 
   @override
   void initState() {
@@ -172,6 +179,10 @@ class _GroupAvailabilityState extends State<GroupAvailability> {
     for (var entry in combinedList) {
       eventsController.addEvent(createCalendarEvent(entry.availability));
     }
+
+    filteredList.add(combinedList[0]);
+    filteredList.add(combinedList[1]);
+    filteredList.add(combinedList[2]);
   }
 
   @override
@@ -185,6 +196,9 @@ class _GroupAvailabilityState extends State<GroupAvailability> {
           children: [
             const Text("Suggested Times:"),
             SizedBox(
+              height: 20,
+            ),
+            SizedBox(
               height: MediaQuery.of(context).size.height / 10,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -195,11 +209,62 @@ class _GroupAvailabilityState extends State<GroupAvailability> {
                     minHeight: MediaQuery.of(context).size.height / 10,
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: getAvailabilityText(),
                   ),
                 ),
               ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Slider(
+                  value: _currentSliderValue,
+                  min: 0.5,
+                  max: 3,
+                  divisions: 5,
+                  label: _currentSliderValue.toString(),
+                  onChanged: (double value) {
+                    setState(
+                      () {
+                        selectedTimeIndex = -1;
+                        _currentSliderValue = value;
+                        int hours = value.toInt();
+                        int minutes = ((value - hours) * 60).round();
+
+                        filteredList = combinedList
+                            .where((tuple) =>
+                                tuple.availability.duration >=
+                                Duration(hours: hours, minutes: minutes))
+                            .toList();
+                      },
+                    );
+                  },
+                ),
+                IconButton(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) => AlertDialog(
+                        title: const Text('Need help?'),
+                        content: const Text(
+                          "Adjust the slider to select the minimum duration you prefer (in hours) when filtering the group's best available times. For example, dragging the slider to 1.5 will show the best available time slots with duration of at least 1 hour 30 minutes.",
+                          style: TextStyle(
+                            fontSize: 14,
+                          ),
+                        ),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.help),
+                ),
+              ],
             ),
             SizedBox(
               height: MediaQuery.of(context).size.height * 2 / 3,
@@ -268,10 +333,18 @@ class _GroupAvailabilityState extends State<GroupAvailability> {
   }
 
   List<Widget> getAvailabilityText() {
+    if (filteredList.isEmpty) {
+      return [];
+    }
+
     final List<Widget> result = [];
 
-    for (var i = 0; i < maxSuggestedTimes; i++) {
-      final a = combinedList[i].availability;
+    for (var i = 0; i < filteredList.length; i++) {
+      if (i >= maxSuggestedTimes) {
+        break;
+      }
+
+      final a = filteredList[i].availability;
       var startHour = a.start.hour;
       var startMin = a.start.minute == 0 ? "00" : a.start.minute;
       var endHour = a.end.hour;
@@ -283,13 +356,13 @@ class _GroupAvailabilityState extends State<GroupAvailability> {
         M,
         ' ',
         dd,
-        ' from ',
+        ' (',
         h,
         (startHour < 12 ? ":${startMin}am" : ":${startMin}pm")
       ]);
 
-      final endFormatted = formatDate(
-          a.end, [' to ', h, (endHour < 12 ? ":${endMin}am" : ":${endMin}pm")]);
+      final endFormatted = formatDate(a.end,
+          [' - ', h, (endHour < 12 ? ":${endMin}am)" : ":${endMin}pm)")]);
       result.add(
         GestureDetector(
           onTap: () {
@@ -319,8 +392,9 @@ class _GroupAvailabilityState extends State<GroupAvailability> {
                     ),
                     children: <TextSpan>[
                       TextSpan(
-                        text:
-                            "${combinedList[i].participants.toString()}/$totalParticipants",
+                        text: filteredList.isEmpty
+                            ? ""
+                            : "${filteredList[i].participants.toString()}/$totalParticipants",
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
@@ -374,9 +448,10 @@ Widget _tileBuilder(
     shadowColor: Colors.transparent,
     child: Container(
       decoration: BoxDecoration(
-        border: eventsController.selectedEvent == event
-            ? Border.all(color: Colors.red, width: 2)
-            : null,
+        border:
+            eventsController.selectedEvent == event && selectedTimeIndex > -1
+                ? Border.all(color: Colors.red, width: 2)
+                : null,
       ),
       child: Center(
         child: Text(
